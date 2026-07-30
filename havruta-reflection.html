@@ -250,6 +250,11 @@ h2.q-title{
 .entry .qa{ font-size:15px; margin:6px 0; color:var(--ink); }
 .entry .qa b{ color:var(--ink-soft); font-weight:700; }
 .toolbar{ display:flex; gap:10px; flex-wrap:wrap; }
+.period-filter{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:18px; }
+.period-filter .label{ font-size:15px; font-weight:700; color:var(--ink-soft); margin-right:2px; }
+.period-filter .btn{ width:auto; min-height:40px; padding:8px 13px; font-size:15px; }
+.period-filter .btn.on{ background:var(--primary); color:#fff; border-color:var(--primary); }
+.date-filter{ min-height:40px; padding:7px 10px; border:2px solid var(--line); border-radius:14px; font:inherit; color:var(--ink); background:#fff; }
 
 table.tbl{ width:100%; border-collapse:collapse; font-size:15px; }
 table.tbl th, table.tbl td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
@@ -1046,16 +1051,40 @@ function downloadCSV(rows){
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function localDateKey(value){
+  const date = value instanceof Date ? value : new Date(value);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 function TeacherDashboard({ onBack }){
   const [rows, setRows] = useState(null);
   const [confirm, setConfirm] = useState(null);   // {type:'one'|'all', id?}
   const [toast, setToast] = useState('');
+  const [period, setPeriod] = useState('today');
+  const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
 
   const load = useCallback(async () => { setRows(await repo.list()); }, []);
   useEffect(() => { load(); }, [load]);
 
-  const stats = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const list = rows || [];
+    if (period === 'all') return list;
+    if (period === 'date') return list.filter(r => localDateKey(r.created_at) === selectedDate);
+
+    const today = new Date();
+    if (period === 'today') return list.filter(r => localDateKey(r.created_at) === localDateKey(today));
+
+    const start = new Date(today);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - 6);
+    return list.filter(r => new Date(r.created_at) >= start);
+  }, [rows, period, selectedDate]);
+
+  const periodLabel = period === 'today' ? '오늘' : period === 'week' ? '최근 7일' : period === 'all' ? '전체 누적' : selectedDate;
+
+  const stats = useMemo(() => {
+    const list = filteredRows;
     const n = list.length;
     const avg = (key) => n ? (list.reduce((s,r) => s + (Number(r[key]) || 0), 0) / n) : 0;
     const goalCount = {};
@@ -1067,7 +1096,7 @@ function TeacherDashboard({ onBack }){
       pct: n ? Math.round((goalCount[g.value] / n) * 100) : 0,
     })).sort((x,y) => y.count - x.count);
     return { n, part: avg('participation_score'), listen: avg('listening_score'), goals };
-  }, [rows]);
+  }, [filteredRows]);
 
   const doConfirm = async () => {
     if (!confirm) return;
@@ -1091,15 +1120,23 @@ function TeacherDashboard({ onBack }){
           <button className="btn btn-ghost btn-sm" onClick={onBack}>학생 화면</button>
         </div>
         <p className="hint" style={{ marginTop:10, marginBottom:0 }}>
-          저장 위치: 이 브라우저의 로컬 저장소 · 학번 외 개인정보는 수집하지 않습니다.
+          저장 위치: 보호된 Supabase 데이터베이스 · 학번 외 개인정보는 수집하지 않습니다.
         </p>
+        <div className="period-filter" role="group" aria-label="성찰 통계 기간">
+          <span className="label">통계 기간</span>
+          <button className={'btn btn-ghost btn-sm' + (period === 'today' ? ' on' : '')} aria-pressed={period === 'today'} onClick={() => setPeriod('today')}>오늘</button>
+          <button className={'btn btn-ghost btn-sm' + (period === 'week' ? ' on' : '')} aria-pressed={period === 'week'} onClick={() => setPeriod('week')}>최근 7일</button>
+          <button className={'btn btn-ghost btn-sm' + (period === 'all' ? ' on' : '')} aria-pressed={period === 'all'} onClick={() => setPeriod('all')}>전체 누적</button>
+          <button className={'btn btn-ghost btn-sm' + (period === 'date' ? ' on' : '')} aria-pressed={period === 'date'} onClick={() => setPeriod('date')}>날짜 선택</button>
+          {period === 'date' && <input className="date-filter" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} aria-label="조회 날짜" />}
+        </div>
       </div>
 
       <div className="card">
         <div className="stat-grid">
           <div className="stat">
             <div className="num" style={{ color:'var(--lav)' }}>{stats.n}</div>
-            <div className="cap">전체 응답 수</div>
+            <div className="cap">{periodLabel} 응답 수</div>
           </div>
           <div className="stat">
             <div className="num" style={{ color:'var(--primary-dark)' }}>{stats.n ? stats.part.toFixed(2) : '-'}</div>
@@ -1129,18 +1166,18 @@ function TeacherDashboard({ onBack }){
 
       <div className="card">
         <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:16 }}>
-          <h2 className="q-title" style={{ fontSize:21, margin:0, flex:1 }}>최근 성찰</h2>
+          <h2 className="q-title" style={{ fontSize:21, margin:0, flex:1 }}>{periodLabel} 성찰</h2>
           <div className="toolbar">
-            <button className="btn btn-ghost btn-sm" onClick={() => downloadCSV(rows)} disabled={!rows.length}>⬇ CSV 다운로드</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => downloadCSV(filteredRows)} disabled={!filteredRows.length}>⬇ 표시된 CSV 다운로드</button>
             <button className="btn btn-danger btn-sm" onClick={() => setConfirm({ type:'all' })} disabled={!rows.length}>전체 삭제</button>
           </div>
         </div>
 
         {toast && <div style={{ marginBottom:14 }}><Notice icon="✅">{toast}</Notice></div>}
 
-        {rows.length === 0 ? (
-          <p className="hint" style={{ margin:0 }}>아직 저장된 성찰이 없어요. 학생 화면에서 성찰을 작성하면 여기에 표시됩니다.</p>
-        ) : rows.map(r => (
+        {filteredRows.length === 0 ? (
+          <p className="hint" style={{ margin:0 }}>{periodLabel}에 저장된 성찰이 없어요.</p>
+        ) : filteredRows.map(r => (
           <div className="entry" key={r.id}>
             <div className="entry-head">
               <span className="pill">학번 {r.student_id}</span>
