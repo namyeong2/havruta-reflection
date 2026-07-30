@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/havruta-reflection.html"
+    }
+  ]
+}
