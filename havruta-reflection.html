@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light" />
+<title>하브루타 성찰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   하브루타 성찰 — 디자인 토큰
+   ========================================================= */
+:root{
+  --bg:            #FFF8F0;
+  --bg-2:          #FFF1E4;
+  --card:          #FFFFFF;
+  --ink:           #3A322E;   /* 본문 (대비 12:1 이상) */
+  --ink-soft:      #6B5F58;   /* 보조 텍스트 (대비 6:1 이상) */
+  --ink-faint:     #8C7F77;
+  --line:          #F0E2D4;
+
+  --primary:       #E4713F;   /* 따뜻한 주황 - 흰 글씨 대비 4.6:1 */
+  --primary-dark:  #C55B2C;
+  --primary-soft:  #FFEDE2;
+
+  --mint:          #2F8F6B;
+  --mint-soft:     #E3F6ED;
+  --lav:           #6B5BC4;
+  --lav-soft:      #EEEBFB;
+  --sky-soft:      #E6F1FB;
+  --danger:        #C0392B;
+  --danger-soft:   #FDECEA;
+
+  --r-lg: 28px;
+  --r-md: 20px;
+  --r-sm: 14px;
+  --shadow-soft: 0 10px 30px rgba(180,120,80,.13);
+  --shadow-card: 0 4px 16px rgba(180,120,80,.10);
+  --focus: 0 0 0 4px rgba(107,91,196,.45);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+
+html,body{ margin:0; padding:0; }
+body{
+  font-family:'Noto Sans KR','Gowun Dodum',system-ui,-apple-system,'Malgun Gothic',sans-serif;
+  background:
+    radial-gradient(1100px 520px at 12% -8%, #FFE9D6 0%, rgba(255,233,214,0) 60%),
+    radial-gradient(900px 480px at 92% 4%, #E9F4FF 0%, rgba(233,244,255,0) 62%),
+    var(--bg);
+  background-attachment: fixed;
+  color:var(--ink);
+  font-size:17px;
+  line-height:1.65;
+  -webkit-text-size-adjust:100%;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* 접근성: 키보드 포커스 링 */
+:focus-visible{ outline:none; box-shadow:var(--focus); border-radius:10px; }
+
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+
+/* ---------- 레이아웃 ---------- */
+.shell{
+  min-height:100dvh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:20px 16px calc(28px + env(safe-area-inset-bottom));
+}
+.wrap{ width:100%; max-width:560px; }
+.wrap-wide{ width:100%; max-width:940px; }
+
+.card{
+  background:var(--card);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-soft);
+  padding:28px 24px;
+  border:1px solid rgba(240,226,212,.9);
+}
+.card + .card{ margin-top:16px; }
+
+/* ---------- 타이포 ---------- */
+h1.app-title{
+  font-family:'Gowun Dodum','Noto Sans KR',sans-serif;
+  font-size:34px; line-height:1.25; margin:0 0 10px; letter-spacing:-.5px;
+}
+h2.q-title{
+  font-family:'Gowun Dodum','Noto Sans KR',sans-serif;
+  font-size:25px; line-height:1.4; margin:0 0 8px; letter-spacing:-.4px;
+}
+.lead{ font-size:17px; color:var(--ink-soft); margin:0 0 22px; }
+.hint{ font-size:15px; color:var(--ink-soft); margin:0 0 14px; }
+.tiny{ font-size:13.5px; color:var(--ink-faint); line-height:1.6; }
+
+.brand-row{ display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+.brand-badge{
+  width:56px; height:56px; flex:0 0 auto; border-radius:20px;
+  background:linear-gradient(140deg,#FFD9B8,#FFB98A);
+  display:grid; place-items:center; font-size:30px;
+  box-shadow:0 6px 16px rgba(228,113,63,.24);
+}
+
+/* ---------- 버튼 ---------- */
+.btn{
+  appearance:none; border:none; cursor:pointer;
+  font-family:inherit; font-weight:700; font-size:18px;
+  border-radius:var(--r-md); padding:16px 22px;
+  transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+  min-height:56px;
+}
+.btn:active:not(:disabled){ transform:translateY(1px) scale(.995); }
+.btn-primary{ background:var(--primary); color:#fff; box-shadow:0 6px 18px rgba(228,113,63,.30); width:100%; }
+.btn-primary:hover:not(:disabled){ background:var(--primary-dark); }
+.btn-primary:disabled{ background:#E8DDD5; color:#9A8C83; cursor:not-allowed; box-shadow:none; }
+.btn-ghost{
+  background:#fff; color:var(--ink); border:2px solid var(--line);
+  box-shadow:var(--shadow-card);
+}
+.btn-ghost:hover{ background:var(--bg-2); }
+.btn-sm{ font-size:15px; padding:10px 16px; min-height:44px; border-radius:14px; }
+.btn-danger{ background:var(--danger-soft); color:var(--danger); border:2px solid rgba(192,57,43,.28); }
+.btn-danger:hover{ background:#FADBD8; }
+.btn-mint{ background:var(--mint); color:#fff; }
+
+.nav-row{ display:flex; gap:12px; margin-top:26px; }
+.nav-row .btn{ flex:1; }
+.nav-row .btn.prev{ flex:0 0 34%; }
+
+/* ---------- 진행 상태 ---------- */
+.progress-head{
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin-bottom:10px; font-size:15px; color:var(--ink-soft); font-weight:700;
+}
+.progress-track{
+  height:12px; border-radius:99px; background:#F2E6DA; overflow:hidden;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.05);
+}
+.progress-fill{
+  height:100%; border-radius:99px;
+  background:linear-gradient(90deg,#FFB27A,#E4713F);
+  transition:width .35s cubic-bezier(.3,.9,.3,1);
+}
+.dots{ display:flex; gap:6px; justify-content:center; margin-top:12px; }
+.dot{ width:8px; height:8px; border-radius:50%; background:#EBDCCE; }
+.dot.on{ background:var(--primary); }
+.dot.done{ background:#FFC9A6; }
+
+/* ---------- 이모지 척도 ---------- */
+.scale{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.scale-btn{
+  display:flex; align-items:center; gap:14px;
+  width:100%; text-align:left; cursor:pointer;
+  background:#fff; border:2px solid var(--line); border-radius:var(--r-md);
+  padding:14px 16px; font-family:inherit; font-size:17px; color:var(--ink);
+  transition:all .14s ease; min-height:64px;
+}
+.scale-btn:hover{ border-color:#FFC7A4; background:var(--primary-soft); }
+.scale-btn .emo{ font-size:30px; line-height:1; width:38px; text-align:center; }
+.scale-btn .lbl{ font-weight:500; }
+.scale-btn[aria-checked="true"]{
+  border-color:var(--primary); background:var(--primary-soft);
+  box-shadow:0 4px 14px rgba(228,113,63,.18);
+}
+.scale-btn[aria-checked="true"] .lbl{ font-weight:700; color:var(--primary-dark); }
+.scale-btn .tick{ margin-left:auto; font-size:20px; color:var(--primary); opacity:0; }
+.scale-btn[aria-checked="true"] .tick{ opacity:1; }
+
+/* ---------- 서술형 ---------- */
+.ta{
+  width:100%; min-height:150px; resize:vertical;
+  font-family:inherit; font-size:17px; line-height:1.7; color:var(--ink);
+  background:#FFFDFB; border:2px solid var(--line); border-radius:var(--r-md);
+  padding:16px; transition:border-color .14s ease;
+}
+.ta::placeholder{ color:#B7A99F; }
+.ta:focus{ border-color:#FFC7A4; }
+.counter{ display:flex; justify-content:flex-end; margin-top:6px; font-size:14px; color:var(--ink-faint); font-weight:700; }
+.counter.warn{ color:var(--primary-dark); }
+
+.input{
+  width:100%; font-family:inherit; font-size:22px; font-weight:700; letter-spacing:1px;
+  text-align:center; color:var(--ink);
+  background:#FFFDFB; border:2px solid var(--line); border-radius:var(--r-md);
+  padding:16px; min-height:62px;
+}
+.input:focus{ border-color:#FFC7A4; }
+.input.text-left{ text-align:left; font-size:17px; font-weight:400; letter-spacing:0; }
+
+/* ---------- 복수 선택 ---------- */
+.choices{ display:flex; flex-direction:column; gap:10px; }
+.choice{
+  display:flex; align-items:center; gap:13px; cursor:pointer;
+  background:#fff; border:2px solid var(--line); border-radius:var(--r-md);
+  padding:14px 16px; font-size:17px; transition:all .14s ease; min-height:60px;
+}
+.choice:hover{ border-color:#B9D9C8; background:var(--mint-soft); }
+.choice input{ width:24px; height:24px; accent-color:var(--mint); flex:0 0 auto; cursor:pointer; }
+.choice.on{ border-color:var(--mint); background:var(--mint-soft); }
+.choice.on span{ font-weight:700; color:#1F6B4F; }
+
+/* ---------- 안내 박스 ---------- */
+.notice{
+  display:flex; gap:10px; align-items:flex-start;
+  background:var(--sky-soft); border-radius:var(--r-sm);
+  padding:12px 14px; font-size:14px; color:#2C4A63; line-height:1.6;
+}
+.notice.warn{ background:#FFF4E0; color:#7A5312; }
+.notice.err{ background:var(--danger-soft); color:#8E2A1F; font-weight:700; }
+.notice .ico{ flex:0 0 auto; }
+
+/* ---------- 완료 화면 ---------- */
+.done-wrap{ text-align:center; padding:36px 24px 30px; }
+.sprout{ font-size:74px; line-height:1; margin-bottom:6px; animation:pop .55s cubic-bezier(.2,1.5,.4,1); }
+@keyframes pop{ 0%{transform:scale(.3);opacity:0} 70%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+.receipt{
+  margin:22px 0 26px; background:var(--bg-2); border-radius:var(--r-md);
+  padding:18px; display:flex; flex-direction:column; gap:10px;
+}
+.receipt-row{ display:flex; justify-content:space-between; align-items:center; font-size:16px; }
+.receipt-row .k{ color:var(--ink-soft); }
+.receipt-row .v{ font-weight:700; }
+
+/* ---------- 교사 화면 ---------- */
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.stat{
+  background:#fff; border-radius:var(--r-md); padding:18px; text-align:center;
+  box-shadow:var(--shadow-card); border:1px solid var(--line);
+}
+.stat .num{ font-size:32px; font-weight:700; line-height:1.2; }
+.stat .cap{ font-size:14px; color:var(--ink-soft); margin-top:2px; }
+.bar-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; font-size:15px; }
+.bar-row .name{ flex:0 0 148px; }
+.bar-track{ flex:1; height:14px; background:#F2E6DA; border-radius:99px; overflow:hidden; }
+.bar-fill{ height:100%; background:linear-gradient(90deg,#A6D8C0,#2F8F6B); border-radius:99px; }
+.bar-row .pct{ flex:0 0 62px; text-align:right; font-weight:700; }
+
+.entry{
+  border:1px solid var(--line); border-radius:var(--r-md);
+  padding:16px; margin-bottom:12px; background:#fff;
+}
+.entry-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.pill{ background:var(--lav-soft); color:var(--lav); font-weight:700; border-radius:99px; padding:4px 12px; font-size:14px; }
+.pill.mint{ background:var(--mint-soft); color:#1F6B4F; }
+.pill.warm{ background:var(--primary-soft); color:var(--primary-dark); }
+.entry .qa{ font-size:15px; margin:6px 0; color:var(--ink); }
+.entry .qa b{ color:var(--ink-soft); font-weight:700; }
+.toolbar{ display:flex; gap:10px; flex-wrap:wrap; }
+
+table.tbl{ width:100%; border-collapse:collapse; font-size:15px; }
+table.tbl th, table.tbl td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+table.tbl th{ color:var(--ink-soft); font-size:14px; }
+
+.footer-note{ text-align:center; margin-top:18px; }
+.link-btn{
+  background:none; border:none; color:var(--ink-faint); font-family:inherit;
+  font-size:14px; cursor:pointer; text-decoration:underline; padding:6px;
+}
+
+/* ---------- 모달 ---------- */
+.modal-bg{
+  position:fixed; inset:0; background:rgba(58,50,46,.5);
+  display:grid; place-items:center; padding:20px; z-index:50;
+}
+.modal{
+  background:#fff; border-radius:var(--r-lg); padding:26px 22px;
+  max-width:420px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+.modal h3{ margin:0 0 10px; font-size:21px; }
+
+.fade{ animation:fade .28s ease; }
+@keyframes fade{ from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none} }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; }
+}
+
+/* ---------- 데스크톱 ---------- */
+@media (min-width:768px){
+  body{ font-size:18px; }
+  .shell{ padding:40px 24px 60px; }
+  .card{ padding:36px 34px; }
+  h1.app-title{ font-size:40px; }
+  h2.q-title{ font-size:28px; }
+  .scale{ gap:12px; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<noscript><p style="padding:24px">이 앱을 사용하려면 자바스크립트를 켜 주세요.</p></noscript>
+
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+/* =========================================================================
+ * 0. 설정
+ * =======================================================================*/
+const CONFIG = {
+  // 교사 화면 비밀번호 (프로토타입용 — 실제 운영 시 서버 인증으로 교체하세요)
+  TEACHER_PASSWORD: 'havruta',
+  STORAGE_KEY: 'havruta_reflections_v1',
+  MAX_TEXT: 300,
+  MAX_STUDENT_ID: 10,
+};
+
+/* =========================================================================
+ * 1. 데이터 접근 계층 (Repository)
+ *    - 화면 코드는 이 인터페이스만 사용합니다.
+ *    - 나중에 Supabase 등으로 교체할 때 이 파일의 이 부분만 바꾸면 됩니다.
+ *
+ *    interface ReflectionRepository {
+ *      list(): Promise<Reflection[]>          // 최신순
+ *      create(input): Promise<Reflection>
+ *      remove(id): Promise<void>
+ *      clear(): Promise<void>
+ *    }
+ *
+ *    Reflection = {
+ *      id, student_id, created_at,
+ *      participation_score(1~5), listening_score(1~5),
+ *      thought_change, memorable_peer_idea, my_final_thought,
+ *      next_goals: string[], next_goal_other: string
+ *    }
+ *    ※ 이름 · 이메일 · 전화번호 · 위치 · 기기 정보는 저장하지 않습니다.
+ * =======================================================================*/
+
+function newId(){
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+  return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
+}
+
+/** 저장 직전 정규화 + 검증. 잘못된 값은 예외를 던집니다. */
+function normalizeRecord(input){
+  const clean = (s) => String(s == null ? '' : s).replace(/\s+/g,' ').trim().slice(0, CONFIG.MAX_TEXT);
+  const score = (n) => {
+    const v = Number(n);
+    if (!Number.isInteger(v) || v < 1 || v > 5) throw new Error('점수는 1~5 사이여야 합니다.');
+    return v;
+  };
+  const sid = String(input.student_id || '').trim();
+  if (!isValidStudentId(sid)) throw new Error('학번 형식이 올바르지 않습니다.');
+
+  const allowedGoals = GOAL_OPTIONS.map(g => g.value);
+  const goals = (Array.isArray(input.next_goals) ? input.next_goals : [])
+    .filter(g => allowedGoals.includes(g));
+  if (goals.length === 0) throw new Error('다음 목표를 한 가지 이상 선택해 주세요.');
+
+  const rec = {
+    id: newId(),
+    student_id: sid,
+    created_at: new Date().toISOString(),
+    participation_score: score(input.participation_score),
+    listening_score: score(input.listening_score),
+    thought_change: clean(input.thought_change),
+    memorable_peer_idea: clean(input.memorable_peer_idea),
+    my_final_thought: clean(input.my_final_thought),
+    next_goals: goals,
+    next_goal_other: goals.includes('기타') ? clean(input.next_goal_other) : '',
+  };
+  if (!rec.thought_change || !rec.memorable_peer_idea || !rec.my_final_thought){
+    throw new Error('서술형 문항을 모두 채워 주세요.');
+  }
+  return rec;
+}
+
+/** 로컬 저장소 어댑터 (기본값) */
+function createLocalRepository(){
+  const read = () => {
+    try{
+      const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  };
+  const write = (arr) => localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(arr));
+
+  return {
+    name: 'local',
+    async list(){
+      return read().sort((a,b) => (a.created_at < b.created_at ? 1 : -1));
+    },
+    async create(input){
+      const rec = normalizeRecord(input);
+      const arr = read();
+      arr.push(rec);
+      write(arr);
+      return rec;
+    },
+    async remove(id){
+      write(read().filter(r => r.id !== id));
+    },
+    async clear(){
+      write([]);
+    },
+  };
+}
+
+/* ---- Supabase 교체 예시 (주석) ------------------------------------------
+ * 아래처럼 같은 메서드만 구현하면 화면 코드는 하나도 바꾸지 않아도 됩니다.
+ *
+ * function createSupabaseRepository(client){
+ *   const T = 'reflections';
+ *   return {
+ *     name: 'supabase',
+ *     async list(){
+ *       const { data, error } = await client.from(T).select('*')
+ *         .order('created_at', { ascending:false });
+ *       if (error) throw error; return data;
+ *     },
+ *     async create(input){
+ *       const rec = normalizeRecord(input);          // 동일한 검증 재사용
+ *       const { data, error } = await client.from(T).insert(rec).select().single();
+ *       if (error) throw error; return data;
+ *     },
+ *     async remove(id){
+ *       const { error } = await client.from(T).delete().eq('id', id);
+ *       if (error) throw error;
+ *     },
+ *     async clear(){
+ *       const { error } = await client.from(T).delete().neq('id','');
+ *       if (error) throw error;
+ *     },
+ *   };
+ * }
+ *
+ * -- SQL --
+ * create table reflections (
+ *   id uuid primary key,
+ *   student_id text not null,
+ *   created_at timestamptz not null default now(),
+ *   participation_score int2 not null check (participation_score between 1 and 5),
+ *   listening_score     int2 not null check (listening_score     between 1 and 5),
+ *   thought_change       text not null,
+ *   memorable_peer_idea  text not null,
+ *   my_final_thought     text not null,
+ *   next_goals    text[] not null,
+ *   next_goal_other text default ''
+ * );
+ * ------------------------------------------------------------------------*/
+
+const repo = createLocalRepository();   // ← 여기 한 줄만 바꾸면 DB 교체 완료
+
+/* =========================================================================
+ * 2. 문항 정의 / 검증 도우미
+ * =======================================================================*/
+const PARTICIPATION_OPTIONS = [
+  { value:1, emoji:'😶', label:'매우 적게 참여했어요' },
+  { value:2, emoji:'🙂', label:'조금 참여했어요' },
+  { value:3, emoji:'😊', label:'보통이에요' },
+  { value:4, emoji:'😄', label:'적극적으로 참여했어요' },
+  { value:5, emoji:'🤩', label:'매우 적극적으로 참여했어요' },
+];
+const LISTENING_OPTIONS = [
+  { value:1, emoji:'😶', label:'잘 듣지 못했어요' },
+  { value:2, emoji:'🙂', label:'조금 들었어요' },
+  { value:3, emoji:'😊', label:'보통이에요' },
+  { value:4, emoji:'😄', label:'잘 들었어요' },
+  { value:5, emoji:'🤩', label:'매우 잘 들었어요' },
+];
+const GOAL_OPTIONS = [
+  { value:'더 질문하기',            emoji:'❓' },
+  { value:'근거를 들어 말하기',      emoji:'🧱' },
+  { value:'친구 의견 이어 말하기',   emoji:'🔗' },
+  { value:'내 생각을 더 분명히 말하기', emoji:'💡' },
+  { value:'기타',                   emoji:'✏️' },
+];
+const TOTAL_STEPS = 6;
+
+/** 학번: 숫자 또는 짧은 영문/한글, 1~10자 */
+function isValidStudentId(v){
+  return /^[0-9A-Za-z가-힣\-]{1,10}$/.test(String(v || '').trim());
+}
+
+/** 개인정보로 보이는 패턴 감지 (차단이 아닌 안내용) */
+function looksLikePII(text){
+  const t = String(text || '');
+  if (/\d{2,4}[-\s]?\d{3,4}[-\s]?\d{4}/.test(t)) return '전화번호처럼 보이는 숫자';
+  if (/[\w.+-]+@[\w-]+\.[\w.]+/.test(t)) return '이메일 주소';
+  if (/\d{6}[-\s]?\d{7}/.test(t)) return '주민등록번호처럼 보이는 숫자';
+  return null;
+}
+
+function fmtDate(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return '-';
+  const p = (n) => String(n).padStart(2,'0');
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtDateShort(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return '-';
+  const p = (n) => String(n).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* =========================================================================
+ * 3. 공통 컴포넌트
+ * =======================================================================*/
+
+function Notice({ tone='info', icon='🔒', children }){
+  return (
+    <div className={'notice' + (tone === 'info' ? '' : ' ' + tone)}>
+      <span className="ico" aria-hidden="true">{icon}</span>
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function ProgressBar({ step, total }){
+  const pct = Math.round((step / total) * 100);
+  return (
+    <div style={{ marginBottom:22 }}>
+      <div className="progress-head">
+        <span>{step} / {total}</span>
+        <span>{pct}%</span>
+      </div>
+      <div className="progress-track"
+           role="progressbar"
+           aria-valuemin={1} aria-valuemax={total} aria-valuenow={step}
+           aria-label={`전체 ${total}문항 중 ${step}번째 문항`}>
+        <div className="progress-fill" style={{ width: pct + '%' }} />
+      </div>
+      <div className="dots" aria-hidden="true">
+        {Array.from({ length: total }, (_, i) => (
+          <span key={i} className={'dot ' + (i + 1 === step ? 'on' : (i + 1 < step ? 'done' : ''))} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 이모지 5단계 척도 — 화살표 키 이동 지원, 각 항목에 텍스트 라벨 + aria-label */
+function EmojiScale({ options, value, onChange, groupLabel }){
+  const refs = useRef([]);
+
+  const move = (idx, dir) => {
+    const next = (idx + dir + options.length) % options.length;
+    onChange(options[next].value);
+    const el = refs.current[next];
+    if (el) el.focus();
+  };
+
+  const onKeyDown = (e, idx) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight'){ e.preventDefault(); move(idx, 1); }
+    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ e.preventDefault(); move(idx, -1); }
+    else if (e.key === 'Home'){ e.preventDefault(); onChange(options[0].value); refs.current[0] && refs.current[0].focus(); }
+    else if (e.key === 'End'){ e.preventDefault(); const l = options.length - 1; onChange(options[l].value); refs.current[l] && refs.current[l].focus(); }
+  };
+
+  const checkedIndex = Math.max(0, options.findIndex(o => o.value === value));
+
+  return (
+    <div className="scale" role="radiogroup" aria-label={groupLabel}>
+      {options.map((o, i) => {
+        const checked = value === o.value;
+        return (
+          <button
+            key={o.value}
+            ref={(el) => { refs.current[i] = el; }}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            aria-label={`${o.value}단계, ${o.label}`}
+            tabIndex={value == null ? (i === 0 ? 0 : -1) : (i === checkedIndex ? 0 : -1)}
+            className="scale-btn"
+            onClick={() => onChange(o.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
+          >
+            <span className="emo" aria-hidden="true">{o.emoji}</span>
+            <span className="lbl">{o.label}</span>
+            <span className="tick" aria-hidden="true">✔</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 300자 제한 서술형 + 글자 수 표시 + 개인정보 안내 */
+function TextAnswer({ id, value, onChange, placeholder, autoFocus }){
+  const left = CONFIG.MAX_TEXT - value.length;
+  const pii = looksLikePII(value);
+  return (
+    <div>
+      <textarea
+        id={id}
+        className="ta"
+        value={value}
+        maxLength={CONFIG.MAX_TEXT}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        onChange={(e) => onChange(e.target.value.slice(0, CONFIG.MAX_TEXT))}
+        aria-describedby={id + '-count'}
+      />
+      <div id={id + '-count'} className={'counter' + (left <= 30 ? ' warn' : '')} aria-live="polite">
+        {value.length} / {CONFIG.MAX_TEXT}자
+      </div>
+      {pii && (
+        <div style={{ marginTop:8 }}>
+          <Notice tone="warn" icon="⚠️">
+            {pii}가 보여요. 개인정보는 적지 않아도 괜찮아요.
+          </Notice>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ConfirmModal({ title, message, confirmText='삭제하기', onConfirm, onCancel }){
+  const ref = useRef(null);
+  useEffect(() => { ref.current && ref.current.focus(); }, []);
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', h);
+    return () => window.removeEventListener('keydown', h);
+  }, [onCancel]);
+
+  return (
+    <div className="modal-bg" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="modal" role="alertdialog" aria-modal="true" aria-labelledby="cf-title">
+        <h3 id="cf-title">{title}</h3>
+        <p className="hint" style={{ marginBottom:20 }}>{message}</p>
+        <div className="nav-row" style={{ marginTop:0 }}>
+          <button ref={ref} className="btn btn-ghost" onClick={onCancel}>취소</button>
+          <button className="btn btn-primary" style={{ background:'var(--danger)' }} onClick={onConfirm}>{confirmText}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================================
+ * 4. 학생 화면
+ * =======================================================================*/
+
+function StartScreen({ onStart }){
+  const [sid, setSid] = useState('');
+  const [err, setErr] = useState('');
+
+  const trimmed = sid.trim();
+  const ok = isValidStudentId(trimmed);
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!trimmed){ setErr('학번을 입력해 주세요.'); return; }
+    if (!ok){ setErr('학번은 숫자나 짧은 글자 10자 이내로 입력해 주세요. (예: 6301)'); return; }
+    setErr('');
+    onStart(trimmed);
+  };
+
+  return (
+    <div className="wrap fade">
+      <div className="card">
+        <div className="brand-row">
+          <div className="brand-badge" aria-hidden="true">🌱</div>
+          <div>
+            <h1 className="app-title" style={{ margin:0 }}>하브루타 성찰</h1>
+          </div>
+        </div>
+        <p className="lead">오늘의 대화를 돌아보고, 나의 생각을 한 걸음 더 키워 보세요.</p>
+
+        <form onSubmit={submit} noValidate>
+          <label htmlFor="sid" style={{ display:'block', fontWeight:700, marginBottom:8 }}>학번</label>
+          <input
+            id="sid"
+            className="input"
+            type="text"
+            inputMode="text"
+            autoComplete="off"
+            maxLength={CONFIG.MAX_STUDENT_ID}
+            placeholder="예: 6301"
+            value={sid}
+            onChange={(e) => { setSid(e.target.value); if (err) setErr(''); }}
+            aria-describedby="sid-help"
+            aria-invalid={!!err}
+          />
+          <div style={{ height:12 }} />
+          {err
+            ? <Notice tone="err" icon="✋">{err}</Notice>
+            : <div id="sid-help"><Notice icon="🔒">학번만 저장해요. 이름·이메일·전화번호 같은 개인정보는 묻지도, 저장하지도 않아요.</Notice></div>
+          }
+          <div style={{ height:22 }} />
+          <button type="submit" className="btn btn-primary" disabled={!ok}>성찰 시작하기</button>
+          {!ok && <p className="tiny" style={{ textAlign:'center', marginTop:10 }}>학번을 입력하면 시작할 수 있어요.</p>}
+        </form>
+      </div>
+
+      <p className="tiny" style={{ textAlign:'center', marginTop:16 }}>
+        1~2분이면 충분해요 · 문항 6개
+      </p>
+    </div>
+  );
+}
+
+const EMPTY_ANSWERS = {
+  participation_score: null,
+  listening_score: null,
+  thought_change: '',
+  memorable_peer_idea: '',
+  my_final_thought: '',
+  next_goals: [],
+  next_goal_other: '',
+};
+
+function SurveyScreen({ studentId, onDone, onExit }){
+  const [step, setStep] = useState(1);
+  const [a, setA] = useState(EMPTY_ANSWERS);
+  const [err, setErr] = useState('');
+  const [saving, setSaving] = useState(false);
+  const headingRef = useRef(null);
+
+  const set = (patch) => { setA(prev => ({ ...prev, ...patch })); if (err) setErr(''); };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (headingRef.current) headingRef.current.focus();
+  }, [step]);
+
+  const toggleGoal = (v) => {
+    const has = a.next_goals.includes(v);
+    const next = has ? a.next_goals.filter(g => g !== v) : a.next_goals.concat(v);
+    set({ next_goals: next, next_goal_other: next.includes('기타') ? a.next_goal_other : '' });
+  };
+
+  const validateStep = (s) => {
+    if (s === 1 && a.participation_score == null) return '참여 정도를 하나 골라 주세요.';
+    if (s === 2 && a.listening_score == null) return '경청 정도를 하나 골라 주세요.';
+    if (s === 3 && !a.thought_change.trim()) return '생각의 변화를 한 문장이라도 적어 주세요.';
+    if (s === 4 && !a.memorable_peer_idea.trim()) return '기억에 남는 친구의 생각을 적어 주세요.';
+    if (s === 5 && !a.my_final_thought.trim()) return '남기고 싶은 생각을 적어 주세요.';
+    if (s === 6){
+      if (a.next_goals.length === 0) return '해 보고 싶은 것을 하나 이상 골라 주세요.';
+      if (a.next_goals.includes('기타') && !a.next_goal_other.trim()) return "'기타'에 하고 싶은 것을 적어 주세요.";
+    }
+    return '';
+  };
+
+  const next = async () => {
+    const msg = validateStep(step);
+    if (msg){ setErr(msg); return; }
+    if (step < TOTAL_STEPS){ setStep(step + 1); return; }
+
+    setSaving(true);
+    try{
+      const rec = await repo.create({ ...a, student_id: studentId });
+      onDone(rec);
+    }catch(e){
+      setErr(e.message || '저장 중 문제가 생겼어요. 다시 시도해 주세요.');
+      setSaving(false);
+    }
+  };
+
+  const prev = () => { if (step > 1){ setErr(''); setStep(step - 1); } else { onExit(); } };
+
+  const Q = {
+    1: {
+      title:'오늘 나는 대화에 얼마나 참여했나요?',
+      body:<EmojiScale groupLabel="오늘 대화 참여 정도" options={PARTICIPATION_OPTIONS}
+                       value={a.participation_score} onChange={(v) => set({ participation_score:v })} />
+    },
+    2: {
+      title:'친구의 이야기를 얼마나 잘 들었나요?',
+      body:<EmojiScale groupLabel="친구 이야기 경청 정도" options={LISTENING_OPTIONS}
+                       value={a.listening_score} onChange={(v) => set({ listening_score:v })} />
+    },
+    3: {
+      title:'대화 전과 비교해 내 생각은 어떻게 변했나요?',
+      hint:'새롭게 알게 된 점, 바뀐 생각, 더 분명해진 생각을 적어 보세요.',
+      body:<TextAnswer id="q3" value={a.thought_change} onChange={(v) => set({ thought_change:v })}
+                       placeholder="예: 처음에는 ○○라고 생각했는데, 대화 후에는 △△도 중요하다고 느꼈어요." />
+    },
+    4: {
+      title:'친구의 말 중 기억에 남는 생각은 무엇인가요?',
+      hint:"친구 이름 대신 '친구가'라고 표현해도 됩니다.",
+      body:(
+        <React.Fragment>
+          <TextAnswer id="q4" value={a.memorable_peer_idea} onChange={(v) => set({ memorable_peer_idea:v })}
+                      placeholder="예: 친구가 ○○라고 말한 점이 인상 깊었어요." />
+          <div style={{ marginTop:10 }}>
+            <Notice icon="🔒">친구의 이름이나 개인적인 이야기, 민감한 내용은 적지 말아 주세요.</Notice>
+          </div>
+        </React.Fragment>
+      )
+    },
+    5: {
+      title:'지금 내가 남기고 싶은 생각은 무엇인가요?',
+      hint:'오늘 대화를 통해 얻은 나만의 생각을 한두 문장으로 적어 보세요.',
+      body:<TextAnswer id="q5" value={a.my_final_thought} onChange={(v) => set({ my_final_thought:v })}
+                       placeholder="예: 서로 다른 이유를 들어 보면 내 생각도 더 단단해지는 것 같아요." />
+    },
+    6: {
+      title:'다음 대화에서 해 보고 싶은 것은 무엇인가요?',
+      hint:'여러 개를 골라도 좋아요.',
+      body:(
+        <React.Fragment>
+          <div className="choices" role="group" aria-label="다음 대화 목표 (복수 선택 가능)">
+            {GOAL_OPTIONS.map(g => {
+              const on = a.next_goals.includes(g.value);
+              return (
+                <label key={g.value} className={'choice' + (on ? ' on' : '')}>
+                  <input type="checkbox" checked={on} onChange={() => toggleGoal(g.value)} aria-label={g.value} />
+                  <span aria-hidden="true">{g.emoji}</span>
+                  <span>{g.value}</span>
+                </label>
+              );
+            })}
+          </div>
+          {a.next_goals.includes('기타') && (
+            <div style={{ marginTop:12 }}>
+              <label htmlFor="other" className="hint" style={{ display:'block', marginBottom:6 }}>
+                기타 — 하고 싶은 것을 적어 주세요
+              </label>
+              <input id="other" className="input text-left" type="text" maxLength={CONFIG.MAX_TEXT}
+                     placeholder="예: 친구 말을 요약해서 다시 말해 보기"
+                     value={a.next_goal_other} autoFocus
+                     onChange={(e) => set({ next_goal_other:e.target.value })} />
+            </div>
+          )}
+        </React.Fragment>
+      )
+    },
+  }[step];
+
+  const isLast = step === TOTAL_STEPS;
+
+  return (
+    <div className="wrap fade">
+      <div className="card">
+        <ProgressBar step={step} total={TOTAL_STEPS} />
+
+        <h2 className="q-title" tabIndex={-1} ref={headingRef}>{Q.title}</h2>
+        {Q.hint && <p className="hint">{Q.hint}</p>}
+
+        {Q.body}
+
+        {err && <div style={{ marginTop:14 }}><Notice tone="err" icon="✋">{err}</Notice></div>}
+
+        <div className="nav-row">
+          <button className="btn btn-ghost prev" onClick={prev} disabled={saving}>
+            {step === 1 ? '나가기' : '이전'}
+          </button>
+          <button className="btn btn-primary" onClick={next} disabled={saving}>
+            {saving ? '저장 중…' : (isLast ? '성찰 저장하기' : '다음')}
+          </button>
+        </div>
+      </div>
+
+      <p className="tiny" style={{ textAlign:'center', marginTop:14 }}>
+        학번 <b>{studentId}</b> 으로 기록 중 · 개인정보는 적지 않아요
+      </p>
+    </div>
+  );
+}
+
+function DoneScreen({ record, onAgain }){
+  return (
+    <div className="wrap fade">
+      <div className="card done-wrap">
+        <div className="sprout" aria-hidden="true">🌱</div>
+        <h1 className="app-title" style={{ fontSize:30 }}>성찰을 저장했어요!</h1>
+        <p className="lead" style={{ marginBottom:0 }}>오늘의 대화가 내 생각을 더 넓게 만들었어요.</p>
+
+        <div className="receipt">
+          <div className="receipt-row"><span className="k">학번</span><span className="v">{record.student_id}</span></div>
+          <div className="receipt-row"><span className="k">작성 날짜</span><span className="v">{fmtDate(record.created_at)}</span></div>
+        </div>
+
+        <button className="btn btn-primary" onClick={onAgain}>새로운 성찰 작성하기</button>
+        <p className="tiny" style={{ marginTop:14 }}>
+          저장한 내용은 선생님만 확인할 수 있어요.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function StudentApp({ goTeacher }){
+  const [phase, setPhase] = useState('start');   // start | survey | done
+  const [studentId, setStudentId] = useState('');
+  const [saved, setSaved] = useState(null);
+
+  return (
+    <React.Fragment>
+      {phase === 'start' && (
+        <StartScreen onStart={(sid) => { setStudentId(sid); setPhase('survey'); }} />
+      )}
+      {phase === 'survey' && (
+        <SurveyScreen
+          studentId={studentId}
+          onDone={(rec) => { setSaved(rec); setPhase('done'); }}
+          onExit={() => setPhase('start')}
+        />
+      )}
+      {phase === 'done' && (
+        <DoneScreen record={saved} onAgain={() => { setSaved(null); setStudentId(''); setPhase('start'); }} />
+      )}
+
+      {phase !== 'survey' && (
+        <div className="wrap footer-note">
+          <button className="link-btn" onClick={goTeacher}>선생님용 화면</button>
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
+
+/* =========================================================================
+ * 5. 교사 화면 (/teacher)
+ * =======================================================================*/
+
+function TeacherLogin({ onOk, onBack }){
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (pw === CONFIG.TEACHER_PASSWORD){ onOk(); }
+    else { setErr('비밀번호가 맞지 않아요.'); }
+  };
+
+  return (
+    <div className="wrap fade">
+      <div className="card">
+        <h1 className="app-title" style={{ fontSize:28 }}>선생님용 화면</h1>
+        <p className="lead">비밀번호를 입력하면 학급 성찰 결과를 볼 수 있어요.</p>
+        <form onSubmit={submit}>
+          <label htmlFor="pw" style={{ display:'block', fontWeight:700, marginBottom:8 }}>비밀번호</label>
+          <input id="pw" className="input text-left" type="password" autoComplete="current-password"
+                 value={pw} onChange={(e) => { setPw(e.target.value); if (err) setErr(''); }}
+                 aria-invalid={!!err} />
+          <div style={{ height:12 }} />
+          {err
+            ? <Notice tone="err" icon="✋">{err}</Notice>
+            : <Notice icon="ℹ️">프로토타입용 간단 인증입니다. 실제 운영 시에는 서버 인증으로 바꿔 주세요.</Notice>}
+          <div style={{ height:20 }} />
+          <button type="submit" className="btn btn-primary" disabled={!pw}>들어가기</button>
+        </form>
+        <div className="footer-note">
+          <button className="link-btn" onClick={onBack}>학생 화면으로 돌아가기</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function summarize(text, n=48){
+  const t = String(text || '').trim();
+  return t.length > n ? t.slice(0, n) + '…' : (t || '-');
+}
+
+function toCSV(rows){
+  const header = ['id','학번','작성 시각','참여도','경청도','생각의 변화','기억에 남는 친구 의견','나의 최종 생각','다음 대화 목표','기타 목표'];
+  const esc = (v) => {
+    const s = String(v == null ? '' : v).replace(/"/g,'""');
+    // CSV 수식 주입 방지
+    const safe = /^[=+\-@]/.test(s) ? "'" + s : s;
+    return '"' + safe + '"';
+  };
+  const lines = [header.map(esc).join(',')];
+  rows.forEach(r => {
+    lines.push([
+      r.id, r.student_id, r.created_at,
+      r.participation_score, r.listening_score,
+      r.thought_change, r.memorable_peer_idea, r.my_final_thought,
+      (r.next_goals || []).join(' / '), r.next_goal_other || ''
+    ].map(esc).join(','));
+  });
+  return '﻿' + lines.join('\r\n');   // 엑셀 한글 깨짐 방지 BOM
+}
+
+function downloadCSV(rows){
+  const blob = new Blob([toCSV(rows)], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const d = new Date();
+  const p = (n) => String(n).padStart(2,'0');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `하브루타성찰_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function TeacherDashboard({ onBack }){
+  const [rows, setRows] = useState(null);
+  const [confirm, setConfirm] = useState(null);   // {type:'one'|'all', id?}
+  const [toast, setToast] = useState('');
+
+  const load = useCallback(async () => { setRows(await repo.list()); }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const stats = useMemo(() => {
+    const list = rows || [];
+    const n = list.length;
+    const avg = (key) => n ? (list.reduce((s,r) => s + (Number(r[key]) || 0), 0) / n) : 0;
+    const goalCount = {};
+    GOAL_OPTIONS.forEach(g => { goalCount[g.value] = 0; });
+    list.forEach(r => (r.next_goals || []).forEach(g => { if (g in goalCount) goalCount[g] += 1; }));
+    const goals = GOAL_OPTIONS.map(g => ({
+      name: g.value, emoji: g.emoji,
+      count: goalCount[g.value],
+      pct: n ? Math.round((goalCount[g.value] / n) * 100) : 0,
+    })).sort((x,y) => y.count - x.count);
+    return { n, part: avg('participation_score'), listen: avg('listening_score'), goals };
+  }, [rows]);
+
+  const doConfirm = async () => {
+    if (!confirm) return;
+    if (confirm.type === 'one'){ await repo.remove(confirm.id); setToast('응답 1건을 삭제했어요.'); }
+    else { await repo.clear(); setToast('전체 데이터를 삭제했어요.'); }
+    setConfirm(null);
+    await load();
+    setTimeout(() => setToast(''), 3000);
+  };
+
+  if (rows === null){
+    return <div className="wrap"><div className="card">불러오는 중…</div></div>;
+  }
+
+  return (
+    <div className="wrap-wide fade">
+      <div className="card">
+        <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+          <div className="brand-badge" aria-hidden="true" style={{ width:46, height:46, fontSize:24, borderRadius:16 }}>📊</div>
+          <h1 className="app-title" style={{ fontSize:27, margin:0, flex:1 }}>하브루타 성찰 — 선생님용</h1>
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>학생 화면</button>
+        </div>
+        <p className="hint" style={{ marginTop:10, marginBottom:0 }}>
+          저장 위치: 이 브라우저의 로컬 저장소 · 학번 외 개인정보는 수집하지 않습니다.
+        </p>
+      </div>
+
+      <div className="card">
+        <div className="stat-grid">
+          <div className="stat">
+            <div className="num" style={{ color:'var(--lav)' }}>{stats.n}</div>
+            <div className="cap">전체 응답 수</div>
+          </div>
+          <div className="stat">
+            <div className="num" style={{ color:'var(--primary-dark)' }}>{stats.n ? stats.part.toFixed(2) : '-'}</div>
+            <div className="cap">참여도 평균 (5점)</div>
+          </div>
+          <div className="stat">
+            <div className="num" style={{ color:'var(--mint)' }}>{stats.n ? stats.listen.toFixed(2) : '-'}</div>
+            <div className="cap">경청도 평균 (5점)</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2 className="q-title" style={{ fontSize:21 }}>다음 대화 목표 선택 비율</h2>
+        {stats.n === 0
+          ? <p className="hint" style={{ margin:0 }}>아직 응답이 없어요.</p>
+          : stats.goals.map(g => (
+              <div className="bar-row" key={g.name}>
+                <span className="name"><span aria-hidden="true">{g.emoji}</span> {g.name}</span>
+                <span className="bar-track"><span className="bar-fill" style={{ width:g.pct + '%' }} /></span>
+                <span className="pct">{g.pct}%</span>
+              </div>
+            ))
+        }
+        {stats.n > 0 && <p className="tiny" style={{ marginTop:8 }}>* 복수 선택이 가능하므로 합이 100%를 넘을 수 있어요.</p>}
+      </div>
+
+      <div className="card">
+        <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:16 }}>
+          <h2 className="q-title" style={{ fontSize:21, margin:0, flex:1 }}>최근 성찰</h2>
+          <div className="toolbar">
+            <button className="btn btn-ghost btn-sm" onClick={() => downloadCSV(rows)} disabled={!rows.length}>⬇ CSV 다운로드</button>
+            <button className="btn btn-danger btn-sm" onClick={() => setConfirm({ type:'all' })} disabled={!rows.length}>전체 삭제</button>
+          </div>
+        </div>
+
+        {toast && <div style={{ marginBottom:14 }}><Notice icon="✅">{toast}</Notice></div>}
+
+        {rows.length === 0 ? (
+          <p className="hint" style={{ margin:0 }}>아직 저장된 성찰이 없어요. 학생 화면에서 성찰을 작성하면 여기에 표시됩니다.</p>
+        ) : rows.map(r => (
+          <div className="entry" key={r.id}>
+            <div className="entry-head">
+              <span className="pill">학번 {r.student_id}</span>
+              <span className="tiny">{fmtDateShort(r.created_at)}</span>
+              <span className="pill warm">참여 {r.participation_score}</span>
+              <span className="pill mint">경청 {r.listening_score}</span>
+              <button className="btn btn-danger btn-sm" style={{ marginLeft:'auto' }}
+                      onClick={() => setConfirm({ type:'one', id:r.id, sid:r.student_id })}
+                      aria-label={`학번 ${r.student_id} 응답 삭제`}>삭제</button>
+            </div>
+            <p className="qa"><b>생각의 변화 ·</b> {summarize(r.thought_change, 70)}</p>
+            <p className="qa"><b>친구 의견 ·</b> {summarize(r.memorable_peer_idea, 70)}</p>
+            <p className="qa"><b>나의 생각 ·</b> {summarize(r.my_final_thought, 70)}</p>
+            <p className="qa"><b>다음 목표 ·</b> {(r.next_goals || []).join(', ')}{r.next_goal_other ? ` (${r.next_goal_other})` : ''}</p>
+          </div>
+        ))}
+      </div>
+
+      {confirm && (
+        <ConfirmModal
+          title={confirm.type === 'all' ? '전체 데이터를 삭제할까요?' : '이 응답을 삭제할까요?'}
+          message={confirm.type === 'all'
+            ? `저장된 성찰 ${rows.length}건이 모두 지워지고 되돌릴 수 없어요. 먼저 CSV로 내려받는 것을 권해요.`
+            : `학번 ${confirm.sid} 학생의 성찰 1건이 지워지고 되돌릴 수 없어요.`}
+          confirmText={confirm.type === 'all' ? '전체 삭제' : '삭제'}
+          onConfirm={doConfirm}
+          onCancel={() => setConfirm(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* =========================================================================
+ * 6. 라우팅 (/teacher 또는 #/teacher)
+ * =======================================================================*/
+function currentRoute(){
+  const path = window.location.pathname || '';
+  const hash = window.location.hash || '';
+  if (/\/teacher\/?$/.test(path) || /^#\/?teacher/.test(hash)) return 'teacher';
+  return 'student';
+}
+
+function App(){
+  const [route, setRoute] = useState(currentRoute);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    const h = () => setRoute(currentRoute());
+    window.addEventListener('hashchange', h);
+    window.addEventListener('popstate', h);
+    return () => { window.removeEventListener('hashchange', h); window.removeEventListener('popstate', h); };
+  }, []);
+
+  const go = (r) => {
+    window.location.hash = (r === 'teacher') ? '#/teacher' : '';
+    setRoute(r);
+  };
+
+  return (
+    <div className="shell">
+      {route === 'teacher'
+        ? (authed
+            ? <TeacherDashboard onBack={() => { setAuthed(false); go('student'); }} />
+            : <TeacherLogin onOk={() => setAuthed(true)} onBack={() => go('student')} />)
+        : <StudentApp goTeacher={() => go('teacher')} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
