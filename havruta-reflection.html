@@ -297,6 +297,7 @@ table.tbl th{ color:var(--ink-soft); font-size:14px; }
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script type="text/babel" data-presets="env,react">
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
@@ -311,6 +312,12 @@ const CONFIG = {
   MAX_TEXT: 300,
   MAX_STUDENT_ID: 10,
 };
+
+// This is a public browser key. Row Level Security protects the data; never
+// put a Supabase service_role key in frontend code.
+const SUPABASE_URL = 'https://dehqjvsfkokuxfegwtib.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_jb5bLV6yOFlw8dDlmJgWNA_3YFv23tW';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 /* =========================================================================
  * 1. 데이터 접근 계층 (Repository)
@@ -447,7 +454,35 @@ function createLocalRepository(){
  * );
  * ------------------------------------------------------------------------*/
 
-const repo = createLocalRepository();   // ← 여기 한 줄만 바꾸면 DB 교체 완료
+function createSupabaseRepository(client){
+  const table = 'reflections';
+  return {
+    name: 'supabase',
+    async list(){
+      const { data, error } = await client.from(table).select('*')
+        .order('created_at', { ascending:false });
+      if (error) throw error;
+      return data || [];
+    },
+    async create(input){
+      const rec = normalizeRecord(input);
+      // Student users have insert-only access, so request no returned row.
+      const { error } = await client.from(table).insert(rec);
+      if (error) throw error;
+      return rec;
+    },
+    async remove(id){
+      const { error } = await client.from(table).delete().eq('id', id);
+      if (error) throw error;
+    },
+    async clear(){
+      const { error } = await client.from(table).delete().neq('id','');
+      if (error) throw error;
+    },
+  };
+}
+
+const repo = createSupabaseRepository(supabaseClient);
 
 /* =========================================================================
  * 2. 문항 정의 / 검증 도우미
@@ -918,31 +953,53 @@ function StudentApp({ goTeacher }){
  * =======================================================================*/
 
 function TeacherLogin({ onOk, onBack }){
+  const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (pw === CONFIG.TEACHER_PASSWORD){ onOk(); }
-    else { setErr('비밀번호가 맞지 않아요.'); }
+    setLoading(true);
+    setErr('');
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password:pw });
+    if (error){
+      setErr('이메일 또는 비밀번호를 확인해 주세요.');
+      setLoading(false);
+      return;
+    }
+    if (data.user?.app_metadata?.role !== 'teacher'){
+      await supabaseClient.auth.signOut();
+      setErr('교사 권한이 없는 계정입니다. 관리자에게 문의해 주세요.');
+      setLoading(false);
+      return;
+    }
+    onOk();
   };
 
   return (
     <div className="wrap fade">
       <div className="card">
         <h1 className="app-title" style={{ fontSize:28 }}>선생님용 화면</h1>
-        <p className="lead">비밀번호를 입력하면 학급 성찰 결과를 볼 수 있어요.</p>
+        <p className="lead">교사 계정으로 로그인하면 학급 성찰 결과를 볼 수 있어요.</p>
         <form onSubmit={submit}>
+          <label htmlFor="email" style={{ display:'block', fontWeight:700, marginBottom:8 }}>이메일</label>
+          <input id="email" className="input text-left" type="email" autoComplete="email"
+                 value={email} onChange={(e) => { setEmail(e.target.value); if (err) setErr(''); }}
+                 aria-invalid={!!err} required />
+          <div style={{ height:12 }} />
           <label htmlFor="pw" style={{ display:'block', fontWeight:700, marginBottom:8 }}>비밀번호</label>
           <input id="pw" className="input text-left" type="password" autoComplete="current-password"
                  value={pw} onChange={(e) => { setPw(e.target.value); if (err) setErr(''); }}
-                 aria-invalid={!!err} />
+                 aria-invalid={!!err} required />
           <div style={{ height:12 }} />
           {err
             ? <Notice tone="err" icon="✋">{err}</Notice>
-            : <Notice icon="ℹ️">프로토타입용 간단 인증입니다. 실제 운영 시에는 서버 인증으로 바꿔 주세요.</Notice>}
+            : <Notice icon="🔒">Supabase에 등록된 교사 계정만 성찰 결과를 볼 수 있어요.</Notice>}
           <div style={{ height:20 }} />
-          <button type="submit" className="btn btn-primary" disabled={!pw}>들어가기</button>
+          <button type="submit" className="btn btn-primary" disabled={!email || !pw || loading}>
+            {loading ? '로그인 중…' : '들어가기'}
+          </button>
         </form>
         <div className="footer-note">
           <button className="link-btn" onClick={onBack}>학생 화면으로 돌아가기</button>
@@ -1138,6 +1195,12 @@ function App(){
     return () => { window.removeEventListener('hashchange', h); window.removeEventListener('popstate', h); };
   }, []);
 
+  useEffect(() => {
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (data.session?.user?.app_metadata?.role === 'teacher') setAuthed(true);
+    });
+  }, []);
+
   const go = (r) => {
     window.location.hash = (r === 'teacher') ? '#/teacher' : '';
     setRoute(r);
@@ -1147,7 +1210,7 @@ function App(){
     <div className="shell">
       {route === 'teacher'
         ? (authed
-            ? <TeacherDashboard onBack={() => { setAuthed(false); go('student'); }} />
+            ? <TeacherDashboard onBack={async () => { await supabaseClient.auth.signOut(); setAuthed(false); go('student'); }} />
             : <TeacherLogin onOk={() => setAuthed(true)} onBack={() => go('student')} />)
         : <StudentApp goTeacher={() => go('teacher')} />}
     </div>
