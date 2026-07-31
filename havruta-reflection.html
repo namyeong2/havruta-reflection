@@ -255,6 +255,11 @@ h2.q-title{
 .period-filter .btn{ width:auto; min-height:40px; padding:8px 13px; font-size:15px; }
 .period-filter .btn.on{ background:var(--primary); color:#fff; border-color:var(--primary); }
 .date-filter{ min-height:40px; padding:7px 10px; border:2px solid var(--line); border-radius:14px; font:inherit; color:var(--ink); background:#fff; }
+.student-filter{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.student-filter .label{ font-size:15px; font-weight:700; color:var(--ink-soft); margin-right:2px; }
+.student-filter input{ width:150px; min-height:40px; padding:7px 10px; border:2px solid var(--line); border-radius:14px; font:inherit; color:var(--ink); background:#fff; }
+.group-date{ margin:20px 0 10px; font-size:16px; font-weight:700; color:var(--lav); }
+.group-date:first-of-type{ margin-top:0; }
 
 table.tbl{ width:100%; border-collapse:collapse; font-size:15px; }
 table.tbl th, table.tbl td{ text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
@@ -1057,31 +1062,52 @@ function localDateKey(value){
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+function formatDateGroup(dateKey){
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return `${year}년 ${month}월 ${day}일`;
+}
+
 function TeacherDashboard({ onBack }){
   const [rows, setRows] = useState(null);
   const [confirm, setConfirm] = useState(null);   // {type:'one'|'all', id?}
   const [toast, setToast] = useState('');
   const [period, setPeriod] = useState('today');
   const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
+  const [studentFilter, setStudentFilter] = useState('');
 
   const load = useCallback(async () => { setRows(await repo.list()); }, []);
   useEffect(() => { load(); }, [load]);
 
   const filteredRows = useMemo(() => {
     const list = rows || [];
-    if (period === 'all') return list;
-    if (period === 'date') return list.filter(r => localDateKey(r.created_at) === selectedDate);
-
+    let filtered = list;
     const today = new Date();
-    if (period === 'today') return list.filter(r => localDateKey(r.created_at) === localDateKey(today));
+    if (period === 'date') filtered = filtered.filter(r => localDateKey(r.created_at) === selectedDate);
+    else if (period === 'today') filtered = filtered.filter(r => localDateKey(r.created_at) === localDateKey(today));
+    else if (period === 'week'){
+      const start = new Date(today);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - 6);
+      filtered = filtered.filter(r => new Date(r.created_at) >= start);
+    }
 
-    const start = new Date(today);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(start.getDate() - 6);
-    return list.filter(r => new Date(r.created_at) >= start);
-  }, [rows, period, selectedDate]);
+    const studentId = studentFilter.trim();
+    return studentId ? filtered.filter(r => r.student_id === studentId) : filtered;
+  }, [rows, period, selectedDate, studentFilter]);
+
+  const studentIds = useMemo(() => [...new Set((rows || []).map(r => r.student_id))].sort(), [rows]);
+  const groupedRows = useMemo(() => {
+    const groups = new Map();
+    filteredRows.forEach(r => {
+      const key = localDateKey(r.created_at);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    });
+    return [...groups.entries()];
+  }, [filteredRows]);
 
   const periodLabel = period === 'today' ? '오늘' : period === 'week' ? '최근 7일' : period === 'all' ? '전체 누적' : selectedDate;
+  const viewLabel = studentFilter.trim() ? `${periodLabel} · 학번 ${studentFilter.trim()}` : periodLabel;
 
   const stats = useMemo(() => {
     const list = filteredRows;
@@ -1130,13 +1156,21 @@ function TeacherDashboard({ onBack }){
           <button className={'btn btn-ghost btn-sm' + (period === 'date' ? ' on' : '')} aria-pressed={period === 'date'} onClick={() => setPeriod('date')}>날짜 선택</button>
           {period === 'date' && <input className="date-filter" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} aria-label="조회 날짜" />}
         </div>
+        <div className="student-filter">
+          <label className="label" htmlFor="student-filter">학생 학번</label>
+          <input id="student-filter" list="student-id-options" value={studentFilter} onChange={(e) => setStudentFilter(e.target.value)} placeholder="전체 학생" inputMode="numeric" />
+          <datalist id="student-id-options">
+            {studentIds.map(id => <option key={id} value={id} />)}
+          </datalist>
+          {studentFilter && <button className="link-btn" onClick={() => setStudentFilter('')}>필터 해제</button>}
+        </div>
       </div>
 
       <div className="card">
         <div className="stat-grid">
           <div className="stat">
             <div className="num" style={{ color:'var(--lav)' }}>{stats.n}</div>
-            <div className="cap">{periodLabel} 응답 수</div>
+            <div className="cap">{viewLabel} 응답 수</div>
           </div>
           <div className="stat">
             <div className="num" style={{ color:'var(--primary-dark)' }}>{stats.n ? stats.part.toFixed(2) : '-'}</div>
@@ -1166,7 +1200,7 @@ function TeacherDashboard({ onBack }){
 
       <div className="card">
         <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:16 }}>
-          <h2 className="q-title" style={{ fontSize:21, margin:0, flex:1 }}>{periodLabel} 성찰</h2>
+          <h2 className="q-title" style={{ fontSize:21, margin:0, flex:1 }}>{viewLabel} 성찰</h2>
           <div className="toolbar">
             <button className="btn btn-ghost btn-sm" onClick={() => downloadCSV(filteredRows)} disabled={!filteredRows.length}>⬇ 표시된 CSV 다운로드</button>
             <button className="btn btn-danger btn-sm" onClick={() => setConfirm({ type:'all' })} disabled={!rows.length}>전체 삭제</button>
@@ -1176,9 +1210,11 @@ function TeacherDashboard({ onBack }){
         {toast && <div style={{ marginBottom:14 }}><Notice icon="✅">{toast}</Notice></div>}
 
         {filteredRows.length === 0 ? (
-          <p className="hint" style={{ margin:0 }}>{periodLabel}에 저장된 성찰이 없어요.</p>
-        ) : filteredRows.map(r => (
-          <div className="entry" key={r.id}>
+          <p className="hint" style={{ margin:0 }}>{viewLabel}에 저장된 성찰이 없어요.</p>
+        ) : groupedRows.map(([dateKey, entries]) => (
+          <React.Fragment key={dateKey}>
+            <h3 className="group-date">{formatDateGroup(dateKey)}</h3>
+            {entries.map(r => <div className="entry" key={r.id}>
             <div className="entry-head">
               <span className="pill">학번 {r.student_id}</span>
               <span className="tiny">{fmtDateShort(r.created_at)}</span>
@@ -1192,7 +1228,8 @@ function TeacherDashboard({ onBack }){
             <p className="qa"><b>친구 의견 ·</b> {summarize(r.memorable_peer_idea, 70)}</p>
             <p className="qa"><b>나의 생각 ·</b> {summarize(r.my_final_thought, 70)}</p>
             <p className="qa"><b>다음 목표 ·</b> {(r.next_goals || []).join(', ')}{r.next_goal_other ? ` (${r.next_goal_other})` : ''}</p>
-          </div>
+            </div>)}
+          </React.Fragment>
         ))}
       </div>
 
